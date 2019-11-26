@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="bbs">
+	<!-- INSERT 시 주의 사항 : NULL을 허용하는 컬럼은 반드시 jdbcType 을 명시해야 한다. -->
+	<insert id="insertBoard" parameterType="com.sp.bbs.Board">
+		INSERT INTO bbs(num,
+		name, subject, content, pwd, ipAddr,
+		saveFilename, originalFilename) VALUES(bbs_seq.NEXTVAL,
+		#{name}, #{subject}, #{content}, #{pwd}, #{ipAddr},
+		#{saveFilename, jdbcType=VARCHAR}, #{originalFilename, jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<!-- ${} : 컬럼명 또는 테이블명에서만 사용사능하며, 컬럼명이나 테이블명이 동적일 경우 사용
+		 #{} : ?(PreparedStatement)로 치환되는 부분으로 값을 나타내는 부분에서 사용.
+		 ? 를 나타내는 부분에는 ${} 사용 불가 CLOB 자료를 검색(LIKE를 사용하지 
+		  않는다) DBMS_LOB.INSTR(content, #{keyword}) &gt; 0 -->
+	<sql id="where-list">
+		<if test="condition == 'all' ">
+			( INSTR(subject, #{keyword}) &gt; 0
+			OR DBMS_LOB.INSTR(content, #{keyword}) &gt; 0 )
+		</if>
+		<if test="condition == 'subject' or condition == 'name' ">
+			INSTR(${condition}, #{keyword}) &gt; 0
+		</if>
+		<if test="condition == 'content' ">
+			DBMS_LOB.INSTR(content, #{keyword}) &gt; 0
+		</if>
+		<if test="condition == 'created' ">
+			( TO_CHAR(created, 'YYYY-MM-DD') = #{keyword}
+			OR TO_CHAR(created, 'YYYYMMDD') = #{keyword} )
+		</if>
+	</sql>
+
+	<select id="dataCount" parameterType="map" resultType="Integer">
+		SELECT NVL(COUNT(*), 0)
+		FROM bbs
+		<where>
+			<if test="keyword != null and keyword != '' ">
+				<include refid="where-list" />
+			</if>
+		</where>
+	</select>
+
+	<select id="listBoard" parameterType="map"
+		resultType="com.sp.bbs.Board">
+		SELECT num, subject, name, hitCount,
+		TO_CHAR(created, 'YYYY-MM-DD') created, saveFilename
+		FROM bbs
+		<where>
+			<if test="keyword != null and keyword != '' ">
+				<include refid="where-list" />
+			</if>
+		</where>
+		ORDER BY num DESC
+		OFFSET #{offset} ROWS FETCH FIRST #{rows} ROWS ONLY
+	</select>
+
+	<!-- 글보기 -->
+	<select id="readBoard" resultType="com.sp.bbs.Board"
+		parameterType="Integer">
+		SELECT num, name, pwd, subject, content, ipAddr,
+		hitCount, created, saveFilename, originalFilename
+		FROM bbs
+		WHERE num =
+		#{num}
+	</select>
+
+	<!-- 조회수 증가 -->
+	<update id="updateHitCount" parameterType="Integer">
+		UPDATE bbs SET
+		hitCount=hitCount+1 WHERE num = #{num}
+	</update>
+
+	<select id="preReadBoard" parameterType="map"
+		resultType="com.sp.bbs.Board">
+		SELECT num, subject
+		FROM bbs
+		<where>
+			<if test="keyword != null and keyword != '' ">
+				<include refid="where-list" />
+			</if>
+			AND ( num &gt; #{num} )
+		</where>
+		ORDER BY num ASC
+		FETCH FIRST 1 ROWS ONLY
+	</select>
+
+	<select id="nextReadBoard" parameterType="map"
+		resultType="com.sp.bbs.Board">
+		SELECT num, subject
+		FROM bbs
+		<where>
+			<if test="keyword != null and keyword != '' ">
+				<include refid="where-list" />
+			</if>
+			AND ( num &lt; #{num} )
+		</where>
+		ORDER BY num DESC
+		FETCH FIRST 1 ROWS ONLY
+	</select>
+
+	<update id="updateBoard">
+		UPDATE bbs SET name = #{name}, subject = #{subject}, content = #{content}, pwd = #{pwd},
+		saveFilename = #{saveFilename, jdbcType = VARCHAR},
+		originalFilename = #{originalFilename, jdbcType = VARCHAR}
+		WHERE num = #{num}
+	</update>
+
+	<delete id="deleteBoard">
+		DELETE FROM bbs WHERE num=#{num}
+	</delete>
+
+</mapper>
