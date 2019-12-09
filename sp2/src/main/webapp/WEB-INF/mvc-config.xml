@@ -18,15 +18,16 @@
         http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd
         http://www.springframework.org/schema/websocket http://www.springframework.org/schema/websocket/spring-websocket.xsd">
 
-    <mvc:annotation-driven />
+	<mvc:annotation-driven />
 
-    <!-- / 매핑에서 정적 리소스(html, css, js등)를 처리할수있도록 설정  -->
-	<mvc:default-servlet-handler/>
+	<!-- / 매핑에서 정적 리소스(html, css, js등)를 처리할수있도록 설정 -->
+	<mvc:default-servlet-handler />
 
 	<context:component-scan base-package="com.sp" />
 
 	<!-- 타일즈 환경 설정 -->
-	<bean class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+	<bean
+		class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
 		<property name="definitions">
 			<list>
 				<value>/WEB-INF/tiles-defs.xml</value>
@@ -34,24 +35,37 @@
 		</property>
 	</bean>
 
-	<bean class="org.springframework.web.servlet.view.UrlBasedViewResolver">
-		<property name="order" value="1"/>
-		<property name="viewClass" value="org.springframework.web.servlet.view.tiles3.TilesView"/>
-		<property name="viewNames" value=".*"/>
+
+	<bean
+		class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<property name="order" value="1" />
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.tiles3.TilesView" />
+		<property name="viewNames" value=".*" />
 	</bean>
 
-	<bean id="viewResolver2" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+	<bean id="viewResolver2"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
 		<property name="order" value="2" />
-		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView" />
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView" />
 		<property name="prefix" value="/WEB-INF/view/" />
 		<property name="suffix" value=".jsp" />
 	</bean>
 
+	<!-- 트랜잭션을 위한 aop 등록 -->
+	<aop:config proxy-target-class="true">
+		<aop:pointcut
+			expression="execution(public * com.sp..*Controller.*(..))"
+			id="controllerOperation" />
+	</aop:config>
+
 	<!-- 파일 업로드 -->
-    <bean id="multipartResolver"  class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
-         <!-- 자바파일이 UTF-8로 저장된 경우 한글파일명이 깨지지 않게하기 위해 -->
-         <property name="defaultEncoding" value="utf-8"/>
-         <property name="maxUploadSize" value="10485760" />
-    </bean>
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 자바파일이 UTF-8로 저장된 경우 한글파일명이 깨지지 않게하기 위해 -->
+		<property name="defaultEncoding" value="utf-8" />
+		<property name="maxUploadSize" value="10485760" />
+	</bean>
 
 </beans>
